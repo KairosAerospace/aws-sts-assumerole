@@ -78,7 +78,7 @@ GetAccountInfo() {
                   ROLE=$(jq    --raw-output ".assume_roles[\"${aws_account}\"][\"aws_role\"]"    "${CONF}")
                MFA_ARN=$(jq    --raw-output ".assume_roles[\"${aws_account}\"][\"aws_mfa_arn\"]" "${CONF}")
   MAX_SESSION_DURATION=$(jq    --raw-output ".assume_roles[\"${aws_account}\"][\"max_session_duration\"]" "${CONF}")
-        ASSUMEROLE_ENV=$(jq -j --raw-output ".assume_roles[\"${aws_account}\"] | select(.environment != null) | .environment[] | \"export \", .name, \"=\", .value, \";\n\"" "${CONF}")
+        ASSUMEROLE_ENV=$(jq -j --raw-output ".assume_roles[\"${aws_account}\"] | select(.environment != null) | .environment[]? | \"export \", .name, \"=\", .value, \";\n\"" "${CONF}")
                 SSHKEY=$(jq    --raw-output ".assume_roles[\"${aws_account}\"] | select(.sshkey != null) | .sshkey" "${CONF}")
 }
 
@@ -86,13 +86,13 @@ GetCodeartifactInfo() {
   local profile="${1:-NA}"
   local jq_output
 
-  jq_output=$(jq ".codeartifact[] | select(.profile==\"${profile}\")" "${CONF}")
+  jq_output=$(jq ".codeartifact[]? | select(.profile==\"${profile}\")" "${CONF}")
   if [[ -n "${jq_output}" ]]; then
     IsVerbose && info "Found CodeArtifact entry for ${profile} in ${CONF}."
-    ASSUMEROLE_CODEARTIFACT_ID=$(jq --raw-output ".codeartifact[] | select(.profile==\"${profile}\") | .id // \"codeartifact\"" "${CONF}")
-    ASSUMEROLE_CODEARTIFACT_USER=$(jq --raw-output ".codeartifact[] | select(.profile==\"${profile}\") | .username // \"aws\"" "${CONF}")
-    ASSUMEROLE_CODEARTIFACT_DOMAINOWNER=$(jq --raw-output ".codeartifact[] | select(.profile==\"${profile}\") | .domain_owner // \"NOT_FOUND\"" "${CONF}")
-    ASSUMEROLE_CODEARTIFACT_DOMAIN=$(jq --raw-output ".codeartifact[] | select(.profile==\"${profile}\") | .domain // \"NOT_FOUND\"" "${CONF}")
+    ASSUMEROLE_CODEARTIFACT_ID=$(jq --raw-output ".codeartifact[]? | select(.profile==\"${profile}\") | .id // \"codeartifact\"" "${CONF}")
+    ASSUMEROLE_CODEARTIFACT_USER=$(jq --raw-output ".codeartifact[]? | select(.profile==\"${profile}\") | .username // \"aws\"" "${CONF}")
+    ASSUMEROLE_CODEARTIFACT_DOMAINOWNER=$(jq --raw-output ".codeartifact[]? | select(.profile==\"${profile}\") | .domain_owner // \"NOT_FOUND\"" "${CONF}")
+    ASSUMEROLE_CODEARTIFACT_DOMAIN=$(jq --raw-output ".codeartifact[]? | select(.profile==\"${profile}\") | .domain // \"NOT_FOUND\"" "${CONF}")
 
     if [[ "${ASSUMEROLE_CODEARTIFACT_DOMAIN}" == "NOT_FOUND" ]]; then
       warning "No codeartifact domain found in ~/.assumerole, settings.xml will not be updated"
@@ -284,7 +284,7 @@ if [[ "${ASSUMEROLE_CODEARTIFACT}" -eq "1" ]]; then
 fi
 
 export CONF="${HOME}/.assumerole"
-AVAILABLE_PROFILES=$(jq --raw-output ".assume_roles | to_entries[] | .key"  "${CONF}")
+AVAILABLE_PROFILES=$(jq --raw-output ".assume_roles | to_entries[]? | .key"  "${CONF}")
 
 if [[ -n ${1} && ${1} == accountlist ]]
 then
